@@ -1,16 +1,16 @@
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Matrix {
 
-    private interface Operation {
-        double execute(double x, double y);
-    }
-
     private List<CustomRow> matrixList;
     private int rowCount;
     private int columnCount;
+
+    private interface Operation {
+        double excecute(double x, double y);
+    }
 
     public Matrix(List<CustomRow> matrixList, int rowCount, int columnCount) {
         this.matrixList = matrixList;
@@ -47,28 +47,26 @@ public class Matrix {
         List<CustomRow> list1 = matrix1.getMatrixList();
         List<CustomRow> list2 = matrix2.getMatrixList();
         int row = 0;
-        List<Node> nodes = new ArrayList<>();
+        double [][] array = new double[matrix1.rowCount][matrix2.columnCount];
+        for (double[] item:
+             array) {
+            Arrays.fill(item,0);
+        }
+        List<Node> nodesFirst = new ArrayList<>();
 
         for (CustomRow item:
              list2) {
-            nodes.add(item.getFirst());
-        }
-
-        while(list1.size()>row){
-            Node first = list1.get(row).getFirst();
-            Node current = first;
-            CustomRow customRow = new CustomRow();
-            for (int i = 0;i<list2.size();i++){
-
-            }
-            row++;
+            nodesFirst.add(item.getFirst());
         }
 
 
 
-        newMatrix = new Matrix(das, matrix2.columnCount, matrix1.rowCount);
+        
+
+        newMatrix = new Matrix(list, matrix2.columnCount, matrix1.rowCount);
         return newMatrix;
     }
+
 
     public static Matrix multiply(Matrix matrix, double value) {
         List<CustomRow> matixBegin = new ArrayList<>();
@@ -86,10 +84,7 @@ public class Matrix {
         return new Matrix(matixBegin, matrix.rowCount, matrix.columnCount);
     }
 
-    public static Matrix sum(Matrix matrix1, Matrix matrix2) throws NotEqualException {
-        if (matrix1.columnCount != matrix2.columnCount || matrix1.rowCount != matrix2.rowCount) {
-            throw new NotEqualException("Матрицы не совпадайют по количеству строк и количеству столбцов");
-        }
+    private static List<CustomRow> sum_sub(Matrix matrix1, Matrix matrix2, Operation action) {
         List<CustomRow> list = new ArrayList<>();
         List<CustomRow> list1 = matrix1.getMatrixList();
         List<CustomRow> list2 = matrix2.getMatrixList();
@@ -100,8 +95,11 @@ public class Matrix {
             CustomRow customRow = new CustomRow();
             do {
                 if (start1.getColumn() == start2.getColumn()) {
-                    Node node = new Node(start1.getValue() + start2.getValue(), i, start1.getColumn());
-                    customRow.addNode(node);
+                    double result = action.excecute(start1.getValue(), start2.getValue());
+                    if(result!=0) {
+                        Node node = new Node(result, i, start1.getColumn());
+                        customRow.addNode(node);
+                    }
                     start1 = start1.next();
                     start2 = start2.next();
                 } else if (start1.getColumn() > start2.getColumn()) {
@@ -113,22 +111,51 @@ public class Matrix {
                     customRow.addNode(node);
                     start1 = start1.next();
                 }
-            } while (start1.hasNext() && start2.hasNext());
+            } while (start1 != null && start2 != null);
 
-            while (start1.hasNext()) {
-                start1 = start1.next();
-                customRow.addNode(start1);
-            }
-
-            while (start2.hasNext()) {
-                start2 = start2.next();
-                customRow.addNode(start2);
-            }
+            list.add(customRow);
         }
 
+        return list;
+    }
+
+    public static Matrix sum(Matrix matrix1, Matrix matrix2) throws NotEqualException {
+        if (matrix1.columnCount != matrix2.columnCount || matrix1.rowCount != matrix2.rowCount) {
+            throw new NotEqualException("Матрицы не совпадайют по количеству строк и количеству столбцов");
+        }
+        List<CustomRow> list = new ArrayList<>();
+
+        list = sum_sub(matrix1, matrix2, Double::sum);
 
         return new Matrix(list, matrix1.getRowCount(), matrix1.getColumnCount());
     }
 
+    public static Matrix subtraction(Matrix matrix1, Matrix matrix2) throws NotEqualException {
+        if (matrix1.columnCount != matrix2.columnCount || matrix1.rowCount != matrix2.rowCount) {
+            throw new NotEqualException("Матрицы не совпадайют по количеству строк и количеству столбцов");
+        }
+        List<CustomRow> list = new ArrayList<>();
 
+        list = sum_sub(matrix1, matrix2, (x,y)->x-y);
+
+        return new Matrix(list, matrix1.getRowCount(), matrix1.getColumnCount());
+    }
+
+    public void show() {
+        for (CustomRow item :
+                matrixList) {
+            int index = 0;
+            Node node = item.getFirst();
+            while (index != columnCount) {
+                if (node!=null && node.getColumn() == index) {
+                    System.out.print(String.format("%f ", node.getValue()));
+                    node = node.next();
+                } else {
+                    System.out.print(String.format("%d ", 0));
+                }
+                index++;
+            }
+            System.out.println();
+        }
+    }
 }

@@ -10,6 +10,7 @@ public class Main {
             for (int i = 1; i < elements.length; i++) {
                 rowObject.addNode(new Node(Double.parseDouble(elements[i]), row, i));
             }
+            rowObject.setColumnCount(elements.length);
         } catch (ClassCastException exp) {
             System.out.println("На вход получено не число");
         }
@@ -42,21 +43,51 @@ public class Main {
         return mListMatrix;
     }
 
-    private static void multiply(Matrix matrix1, Matrix matrix2){
+//    private static void multiply(Matrix matrix1, Matrix matrix2){
+//        try {
+//            Matrix.multiply(matrix1, matrix2);
+//        } catch (NotEqualException exp) {
+//            System.out.println(exp.getMessage());
+//        }
+//    }
+
+    private static void multiply(Matrix matrix, double value) {
+        Matrix.multiply(matrix, value);
+    }
+
+    private static void sum(Matrix matrix1, Matrix matrix2) {
         try {
-            Matrix.multiply(matrix1, matrix2);
+            Matrix.sum(matrix1, matrix2).show();
         } catch (NotEqualException exp) {
             System.out.println(exp.getMessage());
         }
     }
 
-    private static void multiply(Matrix matrix, double value){
-            Matrix.multiply(matrix, value);
+    private static boolean checkForSpace(List<CustomRow> list) {
+        int count = 0;
+        int total = list.size() * list.get(0).getLength();
+        for (CustomRow item :
+                list) {
+            count += item.getLength();
+        }
+
+        return total / 2 >= count;
     }
 
-    private static void sum(Matrix matrix1, Matrix matrix2){
+    private static boolean checkForValidColumns(List<CustomRow> list) throws NotValidMatrix {
+        int count = list.get(0).getColumnCount();
+        for (CustomRow item :
+                list) {
+            if (item.getColumnCount() != count) {
+                throw new NotValidMatrix("Матрица не валидна");
+            }
+        }
+        return true;
+    }
+
+    private static void subtraction(Matrix matrix1, Matrix matrix2){
         try {
-            Matrix.sum(matrix1, matrix2);
+            Matrix.subtraction(matrix1, matrix2).show();
         } catch (NotEqualException exp) {
             System.out.println(exp.getMessage());
         }
@@ -69,11 +100,35 @@ public class Main {
         System.out.println("Введите название файла с 2 матрицой");
         String fileName2 = scanner.nextLine();
 
+
         List<CustomRow> list1 = readFile(fileName1);
         List<CustomRow> list2 = readFile(fileName2);
 
-        Matrix matrix1 = new Matrix(list1);
-        Matrix matrix2 = new Matrix(list2);
+        try {
+            checkForValidColumns(list1);
+            checkForValidColumns(list2);
+        } catch (NotValidMatrix exp) {
+            System.out.println(exp.getMessage());
+            System.exit(1);
+        }
+
+//        if(!(checkForSpace(list1) && checkForSpace(list2))){
+//            System.out.println("Матрицы не являются разряженными");
+//            System.exit(1);
+//        }
+
+
+        Matrix matrix1 = new Matrix(list1, list1.size(), list1.get(0).getColumnCount());
+        Matrix matrix2 = new Matrix(list2, list2.size(), list2.get(0).getColumnCount());
+
+        System.out.println("Суммирование матриц");
+        sum(matrix1, matrix2);
+
+        System.out.println("Вычитание матриц");
+        subtraction(matrix1, matrix2);
+
+        System.out.println("Умножение матриц");
+
 
     }
 }
