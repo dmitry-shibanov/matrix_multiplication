@@ -22,6 +22,21 @@ public class Matrix {
         this.matrixList = matrixList;
     }
 
+    public Matrix(double[][] mas){
+        this.rowCount = mas.length;
+        this.columnCount = mas[0].length;
+        this.matrixList = new ArrayList<>();
+        for (int i = 0;i<rowCount;i++){
+            CustomRow row = new CustomRow();
+            for (int j = 0;j<columnCount;j++){
+                if(mas[i][j]!=0){
+                    row.addNode(new Node(mas[i][j],i,j));
+                }
+            }
+            this.matrixList.add(row);
+        }
+    }
+
     public List<CustomRow> getMatrixList() {
         return matrixList;
     }
@@ -36,7 +51,6 @@ public class Matrix {
 
     public static Matrix multiply(Matrix matrix1, Matrix matrix2) throws NotMultiplyException {
         Matrix newMatrix;
-        List<CustomRow> list = new ArrayList<>();
         if (matrix1.columnCount != matrix2.rowCount) {
             if (matrix1.rowCount == matrix2.columnCount) {
                 return multiply(matrix2, matrix1);
@@ -46,24 +60,28 @@ public class Matrix {
         }
         List<CustomRow> list1 = matrix1.getMatrixList();
         List<CustomRow> list2 = matrix2.getMatrixList();
-        int row = 0;
-        double [][] array = new double[matrix1.rowCount][matrix2.columnCount];
-        for (double[] item:
-             array) {
-            Arrays.fill(item,0);
-        }
-        List<Node> nodesFirst = new ArrayList<>();
 
-        for (CustomRow item:
-             list2) {
-            nodesFirst.add(item.getFirst());
+        double[][] array = new double[matrix1.rowCount][matrix2.columnCount];
+        for (double[] item :
+                array) {
+            Arrays.fill(item, 0);
         }
 
+        for (int row = 0; row < list1.size(); row++) {
+            Node current = list1.get(row).getFirst();
+
+            while(current!=null) {
+                Node node = list2.get(current.getColumn()).getFirst();
+                while (node != null) {
+                    array[row][node.getColumn()] += node.getValue() * current.getValue();
+                    node = node.next();
+                }
+                current = current.next();
+            }
+        }
 
 
-        
-
-        newMatrix = new Matrix(list, matrix2.columnCount, matrix1.rowCount);
+        newMatrix = new Matrix(array);
         return newMatrix;
     }
 
@@ -71,74 +89,69 @@ public class Matrix {
     public static Matrix multiply(Matrix matrix, double value) {
         List<CustomRow> matixBegin = new ArrayList<>();
         for (CustomRow item : matrix.getMatrixList()) {
-            Node first = item.getFirst();
-            CustomRow customRow = new CustomRow(new Node(first.getValue() * value, first.getRow(), first.getColumn()));
+            Node node = item.getFirst();
+            CustomRow customRow = new CustomRow();
+            customRow.setColumnCount(item.getColumnCount());
 
-            while (first.hasNext()) {
-                first = first.next();
-
-                customRow.addNode(first);
+            while (node != null) {
+                customRow.addNode(new Node(node.getValue()*value,node.getRow(),node.getColumn()));
+                node = node.next();
             }
+            matixBegin.add(customRow);
         }
 
-        return new Matrix(matixBegin, matrix.rowCount, matrix.columnCount);
+        return new Matrix(matixBegin, matrix.getRowCount(), matrix.getColumnCount());
     }
 
-    private static List<CustomRow> sum_sub(Matrix matrix1, Matrix matrix2, Operation action) {
-        List<CustomRow> list = new ArrayList<>();
+    private static Matrix sum_sub(Matrix matrix1, Matrix matrix2, Operation action) {
+        List<CustomRow> rows = new ArrayList<>();
+
+        double[][] array = new double[matrix1.rowCount][matrix2.columnCount];
+        for (double[] item :
+                array) {
+            Arrays.fill(item, 0);
+        }
+
         List<CustomRow> list1 = matrix1.getMatrixList();
         List<CustomRow> list2 = matrix2.getMatrixList();
 
-        for (int i = 0; i < list1.size(); i++) {
-            Node start1 = list1.get(i).getFirst();
-            Node start2 = list2.get(i).getFirst();
-            CustomRow customRow = new CustomRow();
-            do {
-                if (start1.getColumn() == start2.getColumn()) {
-                    double result = action.excecute(start1.getValue(), start2.getValue());
-                    if(result!=0) {
-                        Node node = new Node(result, i, start1.getColumn());
-                        customRow.addNode(node);
-                    }
-                    start1 = start1.next();
-                    start2 = start2.next();
-                } else if (start1.getColumn() > start2.getColumn()) {
-                    Node node = new Node(start2.getValue(), i, start2.getColumn());
-                    customRow.addNode(node);
-                    start2 = start2.next();
-                } else {
-                    Node node = new Node(start1.getValue(), i, start1.getColumn());
-                    customRow.addNode(node);
-                    start1 = start1.next();
-                }
-            } while (start1 != null && start2 != null);
-
-            list.add(customRow);
+        for (int row = 0;row<list1.size();row++){
+            Node node = list1.get(row).getFirst();
+            while (node!=null){
+                array[row][node.getColumn()]+=node.getValue();
+                node = node.next();
+            }
         }
 
-        return list;
+        for (int row = 0;row<list1.size();row++){
+            Node node = list2.get(row).getFirst();
+            while (node!=null){
+                array[row][node.getColumn()] = action.excecute(array[row][node.getColumn()],node.getValue());
+                node = node.next();
+            }
+        }
+
+        Matrix matrix = new Matrix(array);
+
+        return matrix;
     }
 
     public static Matrix sum(Matrix matrix1, Matrix matrix2) throws NotEqualException {
         if (matrix1.columnCount != matrix2.columnCount || matrix1.rowCount != matrix2.rowCount) {
             throw new NotEqualException("Матрицы не совпадайют по количеству строк и количеству столбцов");
         }
-        List<CustomRow> list = new ArrayList<>();
+        Matrix matrix = sum_sub(matrix1, matrix2, Double::sum);
 
-        list = sum_sub(matrix1, matrix2, Double::sum);
-
-        return new Matrix(list, matrix1.getRowCount(), matrix1.getColumnCount());
+        return matrix;
     }
 
     public static Matrix subtraction(Matrix matrix1, Matrix matrix2) throws NotEqualException {
         if (matrix1.columnCount != matrix2.columnCount || matrix1.rowCount != matrix2.rowCount) {
             throw new NotEqualException("Матрицы не совпадайют по количеству строк и количеству столбцов");
         }
-        List<CustomRow> list = new ArrayList<>();
+        Matrix matrix = sum_sub(matrix1, matrix2, (x, y) -> x - y);
 
-        list = sum_sub(matrix1, matrix2, (x,y)->x-y);
-
-        return new Matrix(list, matrix1.getRowCount(), matrix1.getColumnCount());
+        return matrix;
     }
 
     public void show() {
@@ -146,8 +159,15 @@ public class Matrix {
                 matrixList) {
             int index = 0;
             Node node = item.getFirst();
+            if(node == null){
+                for(int i = 0;i<item.getColumnCount();i++){
+                    System.out.print(String.format("0 "));
+                    System.out.println();
+                }
+                continue;
+            }
             while (index != columnCount) {
-                if (node!=null && node.getColumn() == index) {
+                if (node != null && node.getColumn() == index) {
                     System.out.print(String.format("%f ", node.getValue()));
                     node = node.next();
                 } else {

@@ -5,10 +5,13 @@ public class Main {
 
     private static CustomRow changeLineMatrix(String line, int row) {
         String[] elements = line.split(" ");
-        CustomRow rowObject = new CustomRow(new Node(Double.parseDouble(elements[0]), row, 0));
+        CustomRow rowObject = new CustomRow();
         try {
-            for (int i = 1; i < elements.length; i++) {
-                rowObject.addNode(new Node(Double.parseDouble(elements[i]), row, i));
+            for (int i = 0; i < elements.length; i++) {
+                double value = Double.parseDouble(elements[i]);
+                if (value != 0) {
+                    rowObject.addNode(new Node(Double.parseDouble(elements[i]), row, i));
+                }
             }
             rowObject.setColumnCount(elements.length);
         } catch (ClassCastException exp) {
@@ -43,16 +46,16 @@ public class Main {
         return mListMatrix;
     }
 
-//    private static void multiply(Matrix matrix1, Matrix matrix2){
-//        try {
-//            Matrix.multiply(matrix1, matrix2);
-//        } catch (NotEqualException exp) {
-//            System.out.println(exp.getMessage());
-//        }
-//    }
+    private static void multiply(Matrix matrix1, Matrix matrix2){
+        try {
+            Matrix.multiply(matrix1, matrix2).show();
+        } catch (NotMultiplyException exp) {
+            System.out.println(exp.getMessage());
+        }
+    }
 
     private static void multiply(Matrix matrix, double value) {
-        Matrix.multiply(matrix, value);
+        Matrix.multiply(matrix, value).show();
     }
 
     private static void sum(Matrix matrix1, Matrix matrix2) {
@@ -85,7 +88,7 @@ public class Main {
         return true;
     }
 
-    private static void subtraction(Matrix matrix1, Matrix matrix2){
+    private static void subtraction(Matrix matrix1, Matrix matrix2) {
         try {
             Matrix.subtraction(matrix1, matrix2).show();
         } catch (NotEqualException exp) {
@@ -128,7 +131,10 @@ public class Main {
         subtraction(matrix1, matrix2);
 
         System.out.println("Умножение матриц");
+        multiply(matrix1,matrix2);
 
+        System.out.println("Умножение матриц на константу");
+        multiply(matrix1,2);
 
     }
 }
